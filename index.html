@@ -472,17 +472,23 @@ function switchTab(tab,idx){
 
 function tglBrand(btn,val){
   tgl('brand-group',btn,'f-brand');
-  updateFemurOptions(val);
+  updateImplantOptions(val);
 }
-function updateFemurOptions(brand){
+function updateImplantOptions(brand){
   const isNexGen=brand==='Zimmer NexGen';
-  const numOpts='<option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>';
-  const alphaOpts='<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option>';
-  ['f-femur-l','f-femur-r'].forEach(id=>{
-    const el=document.getElementById(id);
-    const cur=el.value;
-    el.innerHTML=isNexGen?alphaOpts:numOpts;
-    if([...el.options].some(o=>o.value===cur))el.value=cur;
+  const isPersona=brand==='Zimmer Persona';
+  const numFemur='<option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>';
+  const alphaFemur='<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option>';
+  const numTibia='<option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>';
+  const alphaTibia='<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option>';
+  ['l','r'].forEach(side=>{
+    const fe=document.getElementById('f-femur-'+side);
+    const ti=document.getElementById('f-tibia-'+side);
+    const curF=fe.value, curT=ti.value;
+    fe.innerHTML=isNexGen?alphaFemur:numFemur;
+    ti.innerHTML=isPersona?alphaTibia:numTibia;
+    if([...fe.options].some(o=>o.value===curF))fe.value=curF;
+    if([...ti.options].some(o=>o.value===curT))ti.value=curT;
   });
 }
 function calcDur(){
@@ -603,7 +609,7 @@ function editPatient(){
   Object.entries(fv).forEach(([id,val])=>{document.getElementById(id).value=val||'';});
   setTgl('location-group','f-location',p.location);
   setTgl('brand-group','f-brand',p.brand);
-  updateFemurOptions(p.brand||'');
+  updateImplantOptions(p.brand||'');
   setTgl('cement-group','f-cement',p.cement);
   setTgl('tourniquet-group','f-tourniquet',p.tourniquet);
   document.getElementById('f-tourniquet-time').value=p.tourniquetTime||'';
