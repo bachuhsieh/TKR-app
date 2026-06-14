@@ -134,6 +134,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
       </div>
     </div>
 
+    <div class="field"><label>代工手術</label>
+      <div class="toggle-wrap" id="proxy-group">
+        <button class="tgl on" onclick="tgl('proxy-group',this,'f-proxy')">無</button>
+        <button class="tgl" onclick="tgl('proxy-group',this,'f-proxy')">陳志輝</button>
+        <button class="tgl" onclick="tgl('proxy-group',this,'f-proxy')">李翼安</button>
+        <button class="tgl" onclick="tgl('proxy-group',this,'f-proxy')">羅佑晟</button>
+      </div>
+      <input type="hidden" id="f-proxy" value="無" />
+    </div>
+
     <div class="sec-hdr">術前評估</div>
     <div class="field"><label>診斷</label>
       <div class="toggle-wrap" id="dx-group">
@@ -580,7 +590,7 @@ function viewPatient(id){
   document.getElementById('sheet-body').innerHTML=`
     <div class="dgroup">基本資料</div>
     ${dr('病歷號（彰基）',p.pidCch)}${dr('病歷號（員林）',p.pidYl)}${dr('病歷號（鹿港）',p.pidLg)}${dr('病歷號（漢銘）',p.pidHm)}
-    ${dr('年齡',p.age?p.age+' 歲':'')}${dr('性別',p.sex)}
+    ${dr('年齡',p.age?p.age+' 歲':'')}${dr('性別',p.sex)}${dr('代工手術',p.proxy||'無')}
     <div class="dgroup">手術資訊</div>
     ${dr('開刀地點',p.location)}
     ${dr('手術開始',fmtDt(p.start))}${dr('手術結束',fmtDt(p.end))}
@@ -617,6 +627,7 @@ function editPatient(){
   setTgl('insert-type-r-group','f-insert-type-r',p.insertTypeR);
   setTgl('fc-group','f-fc',p.fc||'無');
   setTgl('recurv-group','f-recurv',p.recurv||'無');
+  setTgl('proxy-group','f-proxy',p.proxy||'無');
   setTgl('dx-group','f-dx',p.dx);
   setTgl('alignment-group','f-alignment',p.alignment||'Varus');
   setImplants(p.implant);
@@ -664,7 +675,7 @@ function savePatient(){
     implant:getImplants(),
     fc:document.getElementById('f-fc').value||'無',
     recurv:document.getElementById('f-recurv').value||'無',
-    alignment:document.getElementById('f-alignment').value||'Varus',
+    proxy:document.getElementById('f-proxy').value||'無',
     dx:document.getElementById('f-dx').value,
     robotic:document.getElementById('f-robotic').value||'一般',
     complication:document.getElementById('f-complication').value.trim(),
@@ -682,6 +693,10 @@ function clearForm(){
   ['f-name','f-pid-cch','f-pid-yl','f-pid-lg','f-pid-hm','f-age','f-sex','f-start','f-end','f-side','f-approach','f-femur-l','f-tibia-l','f-patella-l','f-insert-size-l','f-femur-r','f-tibia-r','f-patella-r','f-insert-size-r','f-complication','f-notes'].forEach(id=>document.getElementById(id).value='');
   ['location-group','brand-group','cement-group','tourniquet-group','insert-type-l-group','insert-type-r-group'].forEach(g=>document.querySelectorAll('#'+g+' .tgl').forEach(b=>b.classList.remove('on')));
   ['f-location','f-brand','f-cement','f-tourniquet','f-insert-type-l','f-insert-type-r'].forEach(id=>document.getElementById(id).value='');
+  // reset proxy to 無
+  const pxBtns=document.querySelectorAll('#proxy-group .tgl');
+  pxBtns.forEach(b=>b.classList.remove('on')); pxBtns[0].classList.add('on');
+  document.getElementById('f-proxy').value='無';
   // reset fc and recurv to 無
   ['fc-group','recurv-group'].forEach(g=>{
     const btns=document.querySelectorAll('#'+g+' .tgl');
@@ -781,11 +796,11 @@ function renderStats(){
 
 function exportCSV(){
   if(!patients.length){alert('目前沒有資料可以匯出');return;}
-  const h=['姓名','病歷號','年齡','性別','開刀地點','手術開始','手術結束','手術時間(分鐘)','手術方式','側別','Approach','診斷','Varus/Valgus','Flexion Contracture','Recurvatum','廠牌','左膝Femur','左膝Tibia','左膝Patella','左膝Insert厚度','左膝Insert類型','右膝Femur','右膝Tibia','右膝Patella','右膝Insert厚度','右膝Insert類型','骨水泥','止血帶','止血帶時間(分鐘)','Spongostan','Surgicel','Oasartis','1-O魚骨線','4-O羽毛線','併發症/追蹤','備註'];
+  const h=['姓名','病歷號','年齡','性別','代工手術','開刀地點','手術開始','手術結束','手術時間(分鐘)','手術方式','側別','Approach','診斷','Varus/Valgus','Flexion Contracture','Recurvatum','廠牌','左膝Femur','左膝Tibia','左膝Patella','左膝Insert厚度','左膝Insert類型','右膝Femur','右膝Tibia','右膝Patella','右膝Insert厚度','右膝Insert類型','骨水泥','止血帶','止血帶時間(分鐘)','Spongostan','Surgicel','Oasartis','1-O魚骨線','4-O羽毛線','併發症/追蹤','備註'];
   const rows=patients.map(p=>{
     const pids=[p.pidCch&&'彰基:'+p.pidCch,p.pidYl&&'員林:'+p.pidYl,p.pidLg&&'鹿港:'+p.pidLg,p.pidHm&&'漢銘:'+p.pidHm].filter(Boolean).join(' / ');
     const imp=p.implant||{};
-    return[p.name,pids,p.age,p.sex,p.location,p.start,p.end,getDur(p)||'',p.robotic||'一般',p.side,p.approach,p.dx,p.alignment||'Varus',p.fc||'無',p.recurv||'無',p.brand,p.femurL,p.tibiaL,p.patellaL,p.insertSizeL,p.insertTypeL,p.femurR,p.tibiaR,p.patellaR,p.insertSizeR,p.insertTypeR,p.cement,p.tourniquet,p.tourniquetTime,imp.spongostan||0,imp.surgicel||0,imp.oasartis||0,imp.fish||0,imp.feather||0,p.complication,p.notes].map(v=>'"'+(v||'').toString().replace(/"/g,'""')+'"');
+    return[p.name,pids,p.age,p.sex,p.proxy||'無',p.location,p.start,p.end,getDur(p)||'',p.robotic||'一般',p.side,p.approach,p.dx,p.alignment||'Varus',p.fc||'無',p.recurv||'無',p.brand,p.femurL,p.tibiaL,p.patellaL,p.insertSizeL,p.insertTypeL,p.femurR,p.tibiaR,p.patellaR,p.insertSizeR,p.insertTypeR,p.cement,p.tourniquet,p.tourniquetTime,imp.spongostan||0,imp.surgicel||0,imp.oasartis||0,imp.fish||0,imp.feather||0,p.complication,p.notes].map(v=>'"'+(v||'').toString().replace(/"/g,'""')+'"');
   });
   const csv=[h.join(','),...rows.map(r=>r.join(','))].join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='TKR_病人資料.csv';a.click();
