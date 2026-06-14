@@ -491,14 +491,19 @@ function updateImplantOptions(brand){
   const alphaFemur='<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option>';
   const numTibia='<option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>';
   const alphaTibia='<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option>';
+  const defaultInsert='<option value="">—</option><option>10mm</option><option>12mm</option><option>14mm</option><option>17mm</option>';
+  const personaInsert='<option value="">—</option><option>10mm</option><option>11mm</option><option>12mm</option><option>14mm</option><option>17mm</option>';
   ['l','r'].forEach(side=>{
     const fe=document.getElementById('f-femur-'+side);
     const ti=document.getElementById('f-tibia-'+side);
-    const curF=fe.value, curT=ti.value;
+    const ins=document.getElementById('f-insert-size-'+side);
+    const curF=fe.value, curT=ti.value, curI=ins.value;
     fe.innerHTML=isNexGen?alphaFemur:numFemur;
     ti.innerHTML=isPersona?alphaTibia:numTibia;
+    ins.innerHTML=isPersona?personaInsert:defaultInsert;
     if([...fe.options].some(o=>o.value===curF))fe.value=curF;
     if([...ti.options].some(o=>o.value===curT))ti.value=curT;
+    if([...ins.options].some(o=>o.value===curI))ins.value=curI;
   });
 }
 function calcDur(){
@@ -771,7 +776,7 @@ function renderStats(){
   patients.forEach(p=>{if(p.tibiaL&&tcnt[p.tibiaL]!==undefined)tcnt[p.tibiaL]++;if(p.tibiaR&&tcnt[p.tibiaR]!==undefined)tcnt[p.tibiaR]++;});
   mkBar('tibia',Object.keys(tcnt),Object.values(tcnt),'#1D9E75');
 
-  const is=['10mm','12mm','14mm','17mm'],ic=Object.fromEntries(is.map(s=>[s,0]));
+  const is=['10mm','11mm','12mm','14mm','17mm'],ic=Object.fromEntries(is.map(s=>[s,0]));
   patients.forEach(p=>{if(p.insertSizeL&&ic[p.insertSizeL]!==undefined)ic[p.insertSizeL]++;if(p.insertSizeR&&ic[p.insertSizeR]!==undefined)ic[p.insertSizeR]++;});
   mkBar('insert',Object.keys(ic),Object.values(ic),'#D85A30');
 
