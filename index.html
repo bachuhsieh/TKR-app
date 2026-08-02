@@ -189,7 +189,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
     </div>
     <div class="row2">
       <div class="field"><label>側別</label>
-        <select id="f-side"><option value="">請選擇</option><option>左膝</option><option>右膝</option><option value="雙膝（同期）">雙膝（同期）</option></select>
+        <select id="f-side" onchange="updateTourniquetMode()"><option value="">請選擇</option><option>左膝</option><option>右膝</option><option value="雙膝（同期）">雙膝（同期）</option></select>
       </div>
       <div class="field"><label>Approach</label>
         <select id="f-approach"><option value="">請選擇</option><option>Medial parapatellar</option><option>Subvastus</option><option>Midvastus</option><option>Lateral parapatellar</option><option>其他</option></select>
@@ -289,7 +289,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
     </div>
     <div class="field" id="tourniquet-time-wrap" style="display:none;">
       <label>止血帶使用時間（分鐘）</label>
-      <input type="number" id="f-tourniquet-time" placeholder="例：45" min="0" max="300" />
+      <div id="tourniquet-single-wrap">
+        <input type="number" id="f-tourniquet-time" placeholder="例：45" min="0" max="300" />
+      </div>
+      <div id="tourniquet-dual-wrap" style="display:none;">
+        <div class="row2">
+          <div>
+            <div style="font-size:12px;color:#0C447C;background:#E6F1FB;border-radius:var(--radius-sm);padding:3px 6px;text-align:center;margin-bottom:4px;font-weight:600;">左膝</div>
+            <input type="number" id="f-tourniquet-time-l" placeholder="例：45" min="0" max="300" />
+          </div>
+          <div>
+            <div style="font-size:12px;color:#633806;background:#FAEEDA;border-radius:var(--radius-sm);padding:3px 6px;text-align:center;margin-bottom:4px;font-weight:600;">右膝</div>
+            <input type="number" id="f-tourniquet-time-r" placeholder="例：45" min="0" max="300" />
+          </div>
+        </div>
+      </div>
     </div>
     <div class="field"><label>自費品項用量</label>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px;">
@@ -525,11 +539,25 @@ function getDur(p){
   return d>0?d:null;
 }
 
+function updateTourniquetMode(){
+  const side=document.getElementById('f-side').value;
+  const isDual=side==='雙膝（同期）';
+  const wrap=document.getElementById('tourniquet-time-wrap');
+  if(wrap.style.display==='none'||!wrap.style.display)return;
+  document.getElementById('tourniquet-single-wrap').style.display=isDual?'none':'block';
+  document.getElementById('tourniquet-dual-wrap').style.display=isDual?'block':'none';
+}
 function tglTourniquet(btn,val){
   tgl('tourniquet-group',btn,'f-tourniquet');
   const show=val!=='未使用';
   document.getElementById('tourniquet-time-wrap').style.display=show?'block':'none';
-  if(!show)document.getElementById('f-tourniquet-time').value='';
+  if(!show){
+    document.getElementById('f-tourniquet-time').value='';
+    document.getElementById('f-tourniquet-time-l').value='';
+    document.getElementById('f-tourniquet-time-r').value='';
+  } else {
+    updateTourniquetMode();
+  }
 }
 function tgl(grp,btn,hid){
   document.querySelectorAll('#'+grp+' .tgl').forEach(b=>b.classList.remove('on'));
@@ -542,6 +570,7 @@ function setTgl(grp,hid,val){
   if(grp==='tourniquet-group'){
     const show=val&&val!=='未使用';
     document.getElementById('tourniquet-time-wrap').style.display=show?'block':'none';
+    if(show)updateTourniquetMode();
   }
 }
 
@@ -605,7 +634,13 @@ function viewPatient(id){
     ${dr('左膝 Femur',p.femurL)}${dr('左膝 Tibia',p.tibiaL)}${dr('左膝 Patella',p.patellaL||'未置換')}${dr('左膝 Insert',[(p.insertSizeL||''),(p.insertTypeL||'')].filter(Boolean).join(' · ')||'—')}
     ${dr('右膝 Femur',p.femurR)}${dr('右膝 Tibia',p.tibiaR)}${dr('右膝 Patella',p.patellaR||'未置換')}${dr('右膝 Insert',[(p.insertSizeR||''),(p.insertTypeR||'')].filter(Boolean).join(' · ')||'—')}
     <div class="dgroup">手術細節</div>
-    ${dr('骨水泥',p.cement)}${dr('止血帶',p.tourniquet)}${p.tourniquetTime?dr('止血帶時間',p.tourniquetTime+' 分鐘'):''}${dr('自費品項',fmtImplants(p.implant))}
+    ${dr('骨水泥',p.cement)}${dr('止血帶',p.tourniquet)}${
+      p.side==='雙膝（同期）'
+        ?(p.tourniquetTimeL||p.tourniquetTimeR
+          ?dr('止血帶時間','左 '+(p.tourniquetTimeL||'—')+' 分 / 右 '+(p.tourniquetTimeR||'—')+' 分')
+          :'')
+        :(p.tourniquetTime?dr('止血帶時間',p.tourniquetTime+' 分鐘'):'')
+    }${dr('自費品項',fmtImplants(p.implant))}
     <div class="dgroup">術前評估</div>
     ${dr('診斷',p.dx)}${dr('Varus/Valgus',p.alignment||'無')}${dr('Flexion Contracture',p.fc||'無')}${dr('Recurvatum',p.recurv||'無')}
     <div class="dgroup">追蹤紀錄</div>
@@ -628,6 +663,8 @@ function editPatient(){
   setTgl('cement-group','f-cement',p.cement);
   setTgl('tourniquet-group','f-tourniquet',p.tourniquet);
   document.getElementById('f-tourniquet-time').value=p.tourniquetTime||'';
+  document.getElementById('f-tourniquet-time-l').value=p.tourniquetTimeL||'';
+  document.getElementById('f-tourniquet-time-r').value=p.tourniquetTimeR||'';
   setTgl('insert-type-l-group','f-insert-type-l',p.insertTypeL);
   setTgl('insert-type-r-group','f-insert-type-r',p.insertTypeR);
   setTgl('fc-group','f-fc',p.fc||'無');
@@ -677,6 +714,8 @@ function savePatient(){
     cement:document.getElementById('f-cement').value,
     tourniquet:document.getElementById('f-tourniquet').value,
     tourniquetTime:document.getElementById('f-tourniquet-time').value,
+    tourniquetTimeL:document.getElementById('f-tourniquet-time-l').value,
+    tourniquetTimeR:document.getElementById('f-tourniquet-time-r').value,
     implant:getImplants(),
     fc:document.getElementById('f-fc').value||'無',
     recurv:document.getElementById('f-recurv').value||'無',
@@ -723,6 +762,8 @@ function clearForm(){
   document.getElementById('f-dx').value='';
   setImplants({});
   document.getElementById('f-tourniquet-time').value='';
+  document.getElementById('f-tourniquet-time-l').value='';
+  document.getElementById('f-tourniquet-time-r').value='';
   document.getElementById('tourniquet-time-wrap').style.display='none';
   document.getElementById('dur-display').textContent='— 分鐘';editingId=null;
   document.getElementById('form-mode-label').textContent='新增一位 TKR 病人';
@@ -801,11 +842,11 @@ function renderStats(){
 
 function exportCSV(){
   if(!patients.length){alert('目前沒有資料可以匯出');return;}
-  const h=['姓名','病歷號','年齡','性別','代工手術','開刀地點','手術開始','手術結束','手術時間(分鐘)','手術方式','側別','Approach','診斷','Varus/Valgus','Flexion Contracture','Recurvatum','廠牌','左膝Femur','左膝Tibia','左膝Patella','左膝Insert厚度','左膝Insert類型','右膝Femur','右膝Tibia','右膝Patella','右膝Insert厚度','右膝Insert類型','骨水泥','止血帶','止血帶時間(分鐘)','Spongostan','Surgicel','Oasartis','1-O魚骨線','4-O羽毛線','併發症/追蹤','備註'];
+  const h=['姓名','病歷號','年齡','性別','代工手術','開刀地點','手術開始','手術結束','手術時間(分鐘)','手術方式','側別','Approach','診斷','Varus/Valgus','Flexion Contracture','Recurvatum','廠牌','左膝Femur','左膝Tibia','左膝Patella','左膝Insert厚度','左膝Insert類型','右膝Femur','右膝Tibia','右膝Patella','右膝Insert厚度','右膝Insert類型','骨水泥','止血帶','止血帶時間(分鐘)','左膝止血帶時間(分鐘)','右膝止血帶時間(分鐘)','Spongostan','Surgicel','Oasartis','1-O魚骨線','4-O羽毛線','併發症/追蹤','備註'];
   const rows=patients.map(p=>{
     const pids=[p.pidCch&&'彰基:'+p.pidCch,p.pidYl&&'員林:'+p.pidYl,p.pidLg&&'鹿港:'+p.pidLg,p.pidHm&&'漢銘:'+p.pidHm].filter(Boolean).join(' / ');
     const imp=p.implant||{};
-    return[p.name,pids,p.age,p.sex,p.proxy||'無',p.location,p.start,p.end,getDur(p)||'',p.robotic||'一般',p.side,p.approach,p.dx,p.alignment||'Varus',p.fc||'無',p.recurv||'無',p.brand,p.femurL,p.tibiaL,p.patellaL,p.insertSizeL,p.insertTypeL,p.femurR,p.tibiaR,p.patellaR,p.insertSizeR,p.insertTypeR,p.cement,p.tourniquet,p.tourniquetTime,imp.spongostan||0,imp.surgicel||0,imp.oasartis||0,imp.fish||0,imp.feather||0,p.complication,p.notes].map(v=>'"'+(v||'').toString().replace(/"/g,'""')+'"');
+    return[p.name,pids,p.age,p.sex,p.proxy||'無',p.location,p.start,p.end,getDur(p)||'',p.robotic||'一般',p.side,p.approach,p.dx,p.alignment||'Varus',p.fc||'無',p.recurv||'無',p.brand,p.femurL,p.tibiaL,p.patellaL,p.insertSizeL,p.insertTypeL,p.femurR,p.tibiaR,p.patellaR,p.insertSizeR,p.insertTypeR,p.cement,p.tourniquet,p.tourniquetTime,p.tourniquetTimeL,p.tourniquetTimeR,imp.spongostan||0,imp.surgicel||0,imp.oasartis||0,imp.fish||0,imp.feather||0,p.complication,p.notes].map(v=>'"'+(v||'').toString().replace(/"/g,'""')+'"');
   });
   const csv=[h.join(','),...rows.map(r=>r.join(','))].join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='TKR_病人資料.csv';a.click();
